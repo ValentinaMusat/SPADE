@@ -105,6 +105,8 @@ class NLayerDiscriminator(BaseNetwork):
             input_nc += 1
         if not opt.no_instance:
             input_nc += 1
+        if opt.dataset_mode_secondary != "":
+            input_nc += 1
         return input_nc
 
     def forward(self, input):
