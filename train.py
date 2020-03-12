@@ -10,6 +10,7 @@ import data
 from util.iter_counter import IterationCounter
 from util.visualizer import Visualizer
 from trainers.pix2pix_trainer import Pix2PixTrainer
+import torch
 
 # parse options
 opt = TrainOptions().parse()
@@ -19,6 +20,9 @@ print(' '.join(sys.argv))
 
 # load the dataset
 dataloader = data.create_dataloader(opt)
+if opt.dataset_mode_secondary != "":
+    dataloader_secondary_base = data.create_dataloader(opt, opt.dataset_mode_secondary)
+    dataloader_secondary = iter(dataloader_secondary_base)
 
 # create trainer for our model
 trainer = Pix2PixTrainer(opt)
@@ -34,6 +38,17 @@ for epoch in iter_counter.training_epochs():
     for i, data_i in enumerate(dataloader, start=iter_counter.epoch_iter):
         iter_counter.record_one_iteration()
 
+        if opt.dataset_mode_secondary != "":
+            bs, _, h, w = data_i['label'].size()
+            data_i["class"] = torch.FloatTensor(bs, 1, h, w).zero_()
+
+            if i % opt.steps_primary_for_one_secondary == 0:
+                try:
+                    data_i = next(dataloader_secondary)
+                except StopIteration:
+                    dataloader_secondary = iter(dataloader_secondary_base)
+                    data_i = next(dataloader_secondary)
+                data_i["class"] = torch.FloatTensor(bs, 1, h, w).zero_() + 1.0
         # Training
         # train generator
         if i % opt.D_steps_per_G == 0:

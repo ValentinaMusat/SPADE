@@ -38,8 +38,12 @@ def get_option_setter(dataset_name):
     return dataset_class.modify_commandline_options
 
 
-def create_dataloader(opt):
-    dataset = find_dataset_using_name(opt.dataset_mode)
+def create_dataloader(opt, get_secondary=""):
+    if get_secondary != "":
+        dataset = find_dataset_using_name(get_secondary)
+    else:
+        dataset = find_dataset_using_name(opt.dataset_mode)
+
     instance = dataset()
     instance.initialize(opt)
     print("dataset [%s] of size %d was created" %

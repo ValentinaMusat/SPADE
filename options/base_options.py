@@ -42,6 +42,11 @@ class BaseOptions():
         # for setting inputs
         parser.add_argument('--dataroot', type=str, default='./datasets/cityscapes/')
         parser.add_argument('--dataset_mode', type=str, default='coco')
+        parser.add_argument('--dataset_mode_secondary', type=str, default='oxbsecondary')
+        parser.add_argument('--dataroot_secondary', type=str,
+                            help='path to the directory that contains secondary label images')
+        parser.add_argument('--steps_primary_for_one_secondary', default=3, type=int, help='# threads for loading data')
+
         parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data argumentation')
         parser.add_argument('--nThreads', default=0, type=int, help='# threads for loading data')
@@ -158,7 +163,8 @@ class BaseOptions():
         # This will be convenient in many places
         opt.semantic_nc = opt.label_nc + \
             (1 if opt.contain_dontcare_label else 0) + \
-            (0 if opt.no_instance else 1)
+            (0 if opt.no_instance else 1) + \
+            (1 if opt.dataset_mode_secondary != "" else 0)
 
         # set gpu ids
         str_ids = opt.gpu_ids.split(',')

@@ -108,10 +108,14 @@ class Pix2PixModel(torch.nn.Module):
     def preprocess_input(self, data):
         # move to GPU and change data types
         data['label'] = data['label'].long()
+        if "class" in list(data.keys()):
+            data["class"] = data["class"].float()
         if self.use_gpu():
             data['label'] = data['label'].cuda()
             data['instance'] = data['instance'].cuda()
             data['image'] = data['image'].cuda()
+            if "class" in list(data.keys()):
+                data["class"] = data["class"].cuda()
 
         # create one-hot label map
         label_map = data['label']
@@ -126,6 +130,9 @@ class Pix2PixModel(torch.nn.Module):
             inst_map = data['instance']
             instance_edge_map = self.get_edges(inst_map)
             input_semantics = torch.cat((input_semantics, instance_edge_map), dim=1)
+
+        if "class" in list(data.keys()):
+            input_semantics = torch.cat((input_semantics, data['class']), dim=1)
 
         return input_semantics, data['image']
 
@@ -235,7 +242,7 @@ class Pix2PixModel(torch.nn.Module):
         return fake, real
 
     def get_edges(self, t):
-        edge = self.ByteTensor(t.size()).zero_()
+        edge = self.ByteTensor(t.size()).zero_().bool()
         edge[:, :, :, 1:] = edge[:, :, :, 1:] | (t[:, :, :, 1:] != t[:, :, :, :-1])
         edge[:, :, :, :-1] = edge[:, :, :, :-1] | (t[:, :, :, 1:] != t[:, :, :, :-1])
         edge[:, :, 1:, :] = edge[:, :, 1:, :] | (t[:, :, 1:, :] != t[:, :, :-1, :])
