@@ -12,9 +12,15 @@ from models.pix2pix_model import Pix2PixModel
 from util.visualizer import Visualizer
 from util import html
 
+import torch
+
 opt = TestOptions().parse()
 
-dataloader = data.create_dataloader(opt)
+if opt.dataset_mode_secondary != "":
+    dataloader = data.create_dataloader(opt, opt.dataset_mode_secondary)
+else:
+    dataloader = data.create_dataloader(opt)
+
 
 model = Pix2PixModel(opt)
 model.eval()
@@ -32,6 +38,11 @@ webpage = html.HTML(web_dir,
 for i, data_i in enumerate(dataloader):
     if i * opt.batchSize >= opt.how_many:
         break
+    bs, _, h, w = data_i['label'].size()
+    if opt.dataset_mode_secondary != "":
+        data_i["class"] = torch.FloatTensor(bs, 1, h, w).zero_()
+    else:
+        data_i["class"] = torch.FloatTensor(bs, 1, h, w).zero_() + 1.0
 
     generated = model(data_i, mode='inference')
 
